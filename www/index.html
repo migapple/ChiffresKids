@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Nombres Kids</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden;background:#1a0533}
+#app{position:fixed;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;overflow:hidden;background:#1a0533}
+
+/* HEADER */
+#header{padding-top:calc(10px + env(safe-area-inset-top));padding-left:calc(12px + env(safe-area-inset-left));padding-right:calc(12px + env(safe-area-inset-right));padding-bottom:8px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;background:#2d0a4e}
+h1{font-size:22px;font-weight:900;color:#fff;letter-spacing:-0.5px}
+h1 span{font-size:20px}
+.lang-btn{background:rgba(255,255,255,0.15);border:none;border-radius:20px;padding:5px 12px;font-size:18px;cursor:pointer;color:#fff;font-weight:700}
+.lang-btn:active{transform:scale(0.95)}
+
+/* TABS */
+#tabs{display:flex;flex-shrink:0;background:#2d0a4e;padding:0 12px 10px;gap:8px}
+.tab{flex:1;padding:8px 4px;border:none;border-radius:14px;font-size:12px;font-weight:800;cursor:pointer;color:#fff;opacity:0.5;transition:all 0.2s;letter-spacing:0.3px}
+.tab.active{opacity:1;transform:scale(1.04);box-shadow:0 3px 12px rgba(0,0,0,0.3)}
+.tab-decouverte{background:#ff6b9d}
+.tab-trace{background:#ffa94d}
+.tab-quiz{background:#51cf66}
+.tab-ordre{background:#339af0}
+
+/* MAIN */
+#main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 16px calc(16px + env(safe-area-inset-bottom))}
+
+/* === ONGLET DECOUVERTE === */
+#screen-decouverte{display:none}
+.nav-row{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:12px}
+.nav-btn{width:48px;height:48px;border:none;border-radius:50%;font-size:24px;font-weight:900;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+.nav-btn:active{transform:scale(0.92)}
+.num-display{text-align:center;position:relative;padding:20px}
+.big-number{font-size:120px;font-weight:900;line-height:1;text-shadow:0 4px 20px rgba(0,0,0,0.3);cursor:pointer;user-select:none;transition:transform 0.1s}
+.big-number:active{transform:scale(0.95)}
+.num-name{font-size:22px;font-weight:800;color:#fff;margin-top:-6px;text-align:center;min-height:32px}
+.objects-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px;padding:10px;background:rgba(255,255,255,0.06);border-radius:20px;min-height:64px}
+.obj-item{font-size:32px;animation:popIn 0.3s ease backwards;border-radius:12px;padding:3px}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.num-dots{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-top:10px;max-width:180px;margin-left:auto;margin-right:auto}
+.dot{border-radius:50%;transition:all 0.2s}
+
+/* Barre de navigation chiffres */
+.num-nav{display:flex;overflow-x:auto;gap:6px;padding:8px 0;scrollbar-width:none}
+.num-nav::-webkit-scrollbar{display:none}
+.num-pill{min-width:38px;height:38px;border:none;border-radius:50%;font-size:16px;font-weight:900;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0.45;transition:all 0.2s;flex-shrink:0}
+.num-pill.current{opacity:1;transform:scale(1.2);box-shadow:0 3px 12px rgba(0,0,0,0.4)}
+
+/* === ONGLET TRACE === */
+#screen-trace{display:none}
+.trace-title{text-align:center;font-size:30px;font-weight:900;color:#fff;margin-bottom:6px}
+.trace-subtitle{text-align:center;font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:12px}
+.canvas-wrap{position:relative;display:flex;justify-content:center}
+#trace-canvas{border-radius:20px;cursor:crosshair;touch-action:none;display:block}
+.trace-actions{display:flex;gap:10px;justify-content:center;margin-top:12px}
+.t-btn{border:none;border-radius:16px;padding:10px 20px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.25)}
+.t-btn:active{transform:scale(0.96)}
+.trace-feedback{text-align:center;margin-top:10px;font-size:18px;font-weight:800;min-height:28px}
+.step-indicators{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
+.step-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.3s}
+.step-dot.done{background:#51cf66}
+.step-dot.active{background:#fff;transform:scale(1.3)}
+
+/* === ONGLET QUIZ === */
+#screen-quiz{display:none}
+.quiz-question{text-align:center;font-size:16px;font-weight:800;color:rgba(255,255,255,0.8);margin-bottom:10px}
+.quiz-objects{display:flex;flex-wrap:wrap;justify-content:center;gap:5px;margin-bottom:16px;padding:14px;background:rgba(255,255,255,0.06);border-radius:20px;min-height:70px}
+.quiz-obj{font-size:34px}
+.quiz-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.choice-btn{border:none;border-radius:18px;padding:14px 8px;font-size:28px;font-weight:900;color:#fff;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25);transition:transform 0.1s,background 0.2s}
+.choice-btn:active{transform:scale(0.93)}
+.choice-btn.correct{background:#51cf66 !important;box-shadow:0 0 0 3px #fff !important}
+.choice-btn.wrong{background:#ff6b6b !important;animation:shake 0.3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.score-bar{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px}
+.score-star{font-size:22px;transition:transform 0.3s}
+.score-star.earned{animation:starPop 0.4s ease}
+@keyframes starPop{0%{transform:scale(0)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
+.quiz-progress{font-size:13px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:8px}
+
+/* === ONGLET ORDRE === */
+#screen-ordre{display:none}
+.ordre-title{text-align:center;font-size:15px;font-weight:800;color:rgba(255,255,255,0.7);margin-bottom:14px}
+.ordre-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.ordre-card{border-radius:16px;padding:10px 4px;text-align:center;cursor:pointer;font-size:26px;font-weight:900;color:#fff;box-shadow:0 4px 10px rgba(0,0,0,0.25);transition:transform 0.15s,box-shadow 0.15s;user-select:none;min-height:56px;display:flex;align-items:center;justify-content:center}
+.ordre-card:active{transform:scale(0.94)}
+.ordre-card.selected{transform:scale(1.1);box-shadow:0 0 0 3px #fff,0 6px 16px rgba(0,0,0,0.3)}
+.ordre-card.correct{background:#51cf66 !important;box-shadow:0 0 0 3px #fff !important}
+.ordre-card.wrong{animation:shake 0.3s;background:#ff6b6b !important}
+.ordre-card.placed{opacity:0.35;cursor:default;transform:none}
+.suite-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:14px;padding:10px;background:rgba(255,255,255,0.06);border-radius:16px}
+.suite-num{font-size:24px;font-weight:900;color:#fff;min-width:36px;text-align:center}
+.suite-blank{width:40px;height:40px;border-radius:12px;border:2px dashed rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:rgba(255,255,255,0.4)}
+.suite-blank.filled{border:none;color:#fff}
+.ordre-btn{width:100%;border:none;border-radius:16px;padding:12px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;margin-top:6px}
+.ordre-btn:active{transform:scale(0.98)}
+.ordre-feedback{text-align:center;font-size:17px;font-weight:800;min-height:28px;margin-top:6px}
+
+/* ANIMATION VICTOIRE CANVAS */
+
+/* MODAL APPS */
+#apps-modal{position:fixed;top:0;left:0;right:0;bottom:0;z-index:20000;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,0.55)}
+#apps-modal.open{display:flex}
+#apps-panel{background:#09304a;border-radius:24px 24px 0 0;width:100%;max-width:420px;padding:16px 16px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -8px 32px rgba(0,0,0,0.4)}
+#apps-panel h3{text-align:center;color:#fff;font-size:15px;font-weight:800;margin-bottom:14px;opacity:0.7}
+.apps-grid-kids{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.app-item-kids{display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;text-decoration:none}
+.app-item-kids:active{transform:scale(0.94)}
+.app-icon-kids{width:64px;height:64px;border-radius:16px;background:#1a4a6e;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 10px rgba(0,0,0,0.3);overflow:hidden}
+.app-icon-kids img{width:64px;height:64px;border-radius:16px;object-fit:cover}
+.app-name-kids{font-size:10px;font-weight:700;color:rgba(255,255,255,0.85);text-align:center;line-height:1.2}
+.apps-close{display:block;margin:16px auto 0;border:none;background:rgba(255,255,255,0.12);color:#fff;font-size:13px;font-weight:700;padding:8px 28px;border-radius:20px;cursor:pointer}
+.apps-close:active{transform:scale(0.96)}
+
+#win-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;pointer-events:none;display:none}
+
+/* SOUND BTN */
+.hdr-btns{display:flex;gap:6px}
+</style>
+</head>
+<body>
+<div id="app">
+<canvas id="win-canvas"></canvas>
+
+<div id="header">
+  <h1><span>🔢</span> <span id="app-title">Nombres Kids</span></h1>
+  <div class="hdr-btns">
+    <button class="lang-btn" onclick="openAppsModal()">📱</button>
+    <button class="lang-btn" id="btn-lang" onclick="toggleLang()">🇬🇧</button>
+    <button class="lang-btn" id="btn-sound" onclick="toggleSound()">🔊</button>
+  </div>
+</div>
+
+<div id="tabs">
+  <button class="tab tab-decouverte active" onclick="switchTab('decouverte')" id="tab-decouverte">👁 <span data-key="tab_dec">Découverte</span></button>
+  <button class="tab tab-trace" onclick="switchTab('trace')" id="tab-trace">✏️ <span data-key="tab_tra">Tracé</span></button>
+  <button class="tab tab-quiz" onclick="switchTab('quiz')" id="tab-quiz">❓ <span data-key="tab_qui">Quiz</span></button>
+  <button class="tab tab-ordre" onclick="switchTab('ordre')" id="tab-ordre">🔢 <span data-key="tab_ord">Ordre</span></button>
+</div>
+
+<div id="main">
+
+  <!-- DECOUVERTE -->
+  <div id="screen-decouverte">
+    <div class="num-nav" id="num-nav"></div>
+    <div class="num-display">
+      <div class="big-number" id="big-num" onclick="speakNumber()">1</div>
+      <div class="num-name" id="num-name">un</div>
+    </div>
+    <div class="nav-row">
+      <button class="nav-btn" id="btn-prev" onclick="changeNum(-1)" style="background:#ff6b9d">◀</button>
+      <button class="nav-btn" onclick="speakNumber()" style="background:#ffa94d;font-size:20px">🔊</button>
+      <button class="nav-btn" id="btn-next" onclick="changeNum(1)" style="background:#51cf66">▶</button>
+    </div>
+    <div class="objects-grid" id="objects-grid"></div>
+    <div class="num-dots" id="num-dots"></div>
+  </div>
+
+  <!-- TRACE -->
+  <div id="screen-trace">
+    <div class="trace-title" id="trace-title">Trace le chiffre 1</div>
+    <div class="trace-subtitle" id="trace-subtitle">Suis les flèches avec ton doigt !</div>
+    <div class="step-indicators" id="step-dots"></div>
+    <div class="canvas-wrap"><canvas id="trace-canvas" width="300" height="300"></canvas></div>
+    <div class="trace-actions">
+      <button class="t-btn" onclick="tracePrev()" style="background:#ff6b9d" id="trace-prev-btn">◀</button>
+      <button class="t-btn" onclick="clearTrace()" style="background:rgba(255,255,255,0.2)" data-key="effacer">Effacer</button>
+      <button class="t-btn" onclick="traceNext()" style="background:#51cf66" id="trace-next-btn">▶</button>
+    </div>
+    <div class="trace-feedback" id="trace-feedback"></div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="screen-quiz">
+    <div class="score-bar" id="score-stars"></div>
+    <div class="quiz-progress" id="quiz-progress">1 / 10</div>
+    <div class="quiz-question" id="quiz-question">Combien y a-t-il ?</div>
+    <div class="quiz-objects" id="quiz-objects"></div>
+    <div class="quiz-choices" id="quiz-choices"></div>
+  </div>
+
+  <!-- ORDRE -->
+  <div id="screen-ordre">
+    <div class="ordre-title" id="ordre-title">Remets les chiffres dans l'ordre !</div>
+    <div class="suite-row" id="suite-row"></div>
+    <div class="ordre-grid" id="ordre-grid"></div>
+    <div class="ordre-feedback" id="ordre-feedback"></div>
+    <button class="ordre-btn" id="ordre-new-btn" onclick="newOrdre()" style="background:#339af0" data-key="new_game">Nouvelle série ↺</button>
+  </div>
+
+
+<!-- MODAL APPS -->
+<div id="apps-modal" onclick="if(event.target===this)closeAppsModal()">
+  <div id="apps-panel">
+    <h3 id="apps-modal-title">Nos autres apps</h3>
+    <div class="apps-grid-kids" id="apps-grid-kids"></div>
+    <button class="apps-close" onclick="closeAppsModal()">✕ Fermer</button>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script>
+// ===== LANGUE =====
+let lang = 'fr';
+const T = {
+  fr: {
+    app_title: 'Nombres Kids',
+    tab_dec: 'Découverte', tab_tra: 'Tracé', tab_qui: 'Quiz', tab_ord: 'Ordre',
+    effacer: 'Effacer', new_game: 'Nouvelle série ↺',
+    trace_instr: 'Suis les flèches avec ton doigt !',
+    trace_title: num => `Trace le chiffre ${num}`,
+    quiz_q_count: 'Combien y a-t-il ?',
+    quiz_correct: ['Super ! 🌟', 'Bravo ! ⭐', 'Excellent ! 🎉', 'Parfait ! 🏆', 'Génial ! 🌈'],
+    quiz_wrong: ans => `C'était ${ans} !`,
+    quiz_done: s => `Score : ${s}/10 🎉`,
+    ordre_title: 'Remets les chiffres dans l\'ordre !',
+    ordre_suite: 'Complète la suite',
+    ordre_win: 'Bravo ! 🎉',
+    ordre_try: 'Essaie encore ! 🔁',
+    names: ['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize','dix-sept','dix-huit','dix-neuf','vingt'],
+  },
+  en: {
+    app_title: 'Numbers Kids',
+    tab_dec: 'Discover', tab_tra: 'Trace', tab_qui: 'Quiz', tab_ord: 'Order',
+    effacer: 'Clear', new_game: 'New game ↺',
+    trace_instr: 'Follow the arrows with your finger!',
+    trace_title: num => `Trace the number ${num}`,
+    quiz_q_count: 'How many are there?',
+    quiz_correct: ['Super! 🌟', 'Bravo! ⭐', 'Excellent! 🎉', 'Perfect! 🏆', 'Amazing! 🌈'],
+    quiz_wrong: ans => `It was ${ans}!`,
+    quiz_done: s => `Score: ${s}/10 🎉`,
+    ordre_title: 'Put the numbers in order!',
+    ordre_suite: 'Complete the sequence',
+    ordre_win: 'Well done! 🎉',
+    ordre_try: 'Try again! 🔁',
+    names: ['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen','twenty'],
+  }
+};
+function t(key, ...args) {
+  const v = T[lang][key];
+  return typeof v === 'function' ? v(...args) : v;
+}
+function toggleLang() {
+  lang = lang === 'fr' ? 'en' : 'fr';
+  document.getElementById('btn-lang').textContent = lang === 'fr' ? '🇬🇧' : '🇫🇷';
+  applyLang();
+  if (currentTab === 'decouverte') renderDecouverte();
+  if (currentTab === 'trace') renderTrace();
+  if (currentTab === 'quiz') renderQuiz();
+  if (currentTab === 'ordre') renderOrdre();
+}
+function applyLang() {
+  document.getElementById('app-title').textContent = t('app_title');
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const k = el.dataset.key;
+    if (T[lang][k]) el.textContent = T[lang][k];
+  });
+  // tabs
+  ['dec','tra','qui','ord'].forEach(s => {
+    const el = document.querySelector(`#tab-${['decouverte','trace','quiz','ordre'][['dec','tra','qui','ord'].indexOf(s)]} span`);
+    if (el) el.textContent = t('tab_'+s);
+  });
+}
+
+// ===== THEMES par chiffre =====
+const NUM_COLORS = [
+  '#8b5cf6','#ec4899','#f97316','#eab308','#22c55e',
+  '#06b6d4','#3b82f6','#a855f7','#f43f5e','#10b981',
+  '#f59e0b','#6366f1','#14b8a6','#e11d48','#7c3aed',
+  '#0891b2','#15803d','#b45309','#9333ea','#0284c7','#dc2626'
+];
+const OBJECTS = [
+  ['⭐'],
+  ['🍎'],['🐶','🐱'],['⭐','🌙','☀️'],['🍎','🍊','🍋','🍇'],
+  ['🐶','🐱','🐭','🐰','🐻'],['🌸','🌺','🌹','🌷','🌻','🌼'],
+  ['🚗','🚕','🚙','🚌','🚎','🏎','🚓'],
+  ['⭐','🌙','☀️','💫','✨','🌟','🌈','❄️'],
+  ['🍎','🍊','🍋','🍇','🍓','🫐','🍒','🍑','🥝'],
+  ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯'],
+  ['🎈','🎀','🎁','🎉','🎊','🎋','🎍','🎎','🎏','🎐','🎑'],
+  ['🌍','🌎','🌏','🗺','🧭','⛰','🌋','🏔','🗻','🏕','🌅','🌄'],
+  ['🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🦆','🦅','🦉','🦇','🐺'],
+  ['🍕','🍔','🌮','🌯','🥪','🍟','🌭','🥨','🧀','🥚','🍳','🥞','🧇','🥓'],
+  ['🚀','🛸','🌙','⭐','🌟','💫','✨','☄️','🪐','🌌','🔭','🛰','🌠','🌃','🌉'],
+  ['🎸','🎹','🎺','🎻','🥁','🪘','🎷','🪗','🎙','🎚','🎛','🎵','🎶','🎼','🎤','🎧'],
+  ['🦋','🐌','🐛','🐜','🐝','🪲','🐞','🦗','🕷','🦂','🦟','🦠','🐚','🦪','🐠','🐡','🐬'],
+  ['🏀','⚽','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥊','🥋','🎽','⛸','🛷','🏋'],
+  ['🌹','🌺','🌸','🌼','🌻','🌷','💐','🌿','☘','🍀','🎋','🍃','🍂','🍁','🍄','🌾','💮','🏵','🌱','🌲'],
+  ['🎠','🎡','🎢','🎪','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎸','🎺','🎻','🧩','🎯','🎳','🎲','🃏','🀄'],
+];
+
+// ===== DECOUVERTE =====
+let currentNum = 1;
+function renderDecouverte() {
+  const c = NUM_COLORS[currentNum];
+  document.getElementById('big-num').textContent = currentNum;
+  document.getElementById('big-num').style.color = c;
+  document.getElementById('num-name').textContent = t('names')[currentNum];
+  document.getElementById('num-name').style.color = c;
+
+  // Objets
+  const grid = document.getElementById('objects-grid');
+  grid.innerHTML = '';
+  const objs = OBJECTS[currentNum] || ['⭐'];
+  for (let i = 0; i < currentNum; i++) {
+    const d = document.createElement('div');
+    d.className = 'obj-item';
+    d.textContent = objs[i % objs.length];
+    d.style.animationDelay = (i * 60) + 'ms';
+    grid.appendChild(d);
+  }
+
+  // Dots
+  const dotWrap = document.getElementById('num-dots');
+  dotWrap.innerHTML = '';
+  const dotSize = currentNum <= 10 ? 18 : currentNum <= 15 ? 14 : 11;
+  for (let i = 0; i < currentNum; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.style.cssText = `width:${dotSize}px;height:${dotSize}px;background:${c};animation:popIn 0.2s ${i*40}ms ease backwards`;
+    dotWrap.appendChild(d);
+  }
+
+  // Barre navigation
+  const nav = document.getElementById('num-nav');
+  nav.innerHTML = '';
+  for (let n = 1; n <= 20; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'num-pill' + (n === currentNum ? ' current' : '');
+    btn.textContent = n;
+    btn.style.background = NUM_COLORS[n];
+    btn.onclick = () => { currentNum = n; renderDecouverte(); setTimeout(speakNumber,50); };
+    nav.appendChild(btn);
+  }
+  // Scroll vers le pill actif
+  setTimeout(() => {
+    const pills = nav.querySelectorAll('.num-pill');
+    if (pills[currentNum - 1]) pills[currentNum - 1].scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+  }, 50);
+
+  document.getElementById('btn-prev').style.opacity = currentNum <= 1 ? '0.3' : '1';
+  document.getElementById('btn-next').style.opacity = currentNum >= 20 ? '0.3' : '1';
+}
+function changeNum(dir) {
+  currentNum = Math.max(1, Math.min(20, currentNum + dir));
+  renderDecouverte();
+  speakNumber();
+}
+
+// ===== SPEECH =====
+// ===== VOIX =====
+let _speaking = false;
+
+function speakWithVoice(text, langCode, rate, pitch){
+  if(!soundEnabled) return;
+  if(_speaking) return;
+  _speaking = true;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = langCode;
+    u.rate = rate || 0.85;
+    u.pitch = pitch || 1.15;
+    u.onend = () => { _speaking = false; };
+    u.onerror = () => { _speaking = false; };
+    window.speechSynthesis.speak(u);
+  } catch(e){ _speaking = false; }
+}
+
+
+function speakNumber() {
+  speakWithVoice(t('names')[currentNum], lang==='fr'?'fr-FR':'en-GB', 0.85, 1.15);
+}
+
+// ===== TRACE =====
+let traceNum = 1;
+let isDrawing = false;
+let traceCtx = null;
+let traceCanvas = null;
+let strokeCount = 0;
+let traceStars = 0;
+
+// Définitions des chiffres : liste de points de guidage [x,y] normalisés sur 300x300
+const NUM_PATHS = {
+  1: {strokes: [[[150,60],[150,240]]], arrows: [[[150,60],[150,150]]]},
+  2: {strokes: [[[90,100],[150,70],[210,100],[210,150],[90,240],[210,240]]], arrows: [[[90,100],[180,80]]]},
+  3: {strokes: [[[90,80],[190,80],[140,160],[190,240],[90,240]]], arrows: [[[90,80],[190,80]]]},
+  4: {strokes: [[[170,60],[80,180],[220,180]],[[170,60],[170,240]]], arrows: [[[170,60],[100,160]],[[170,100],[170,200]]]},
+  5: {strokes: [[[200,70],[90,70],[80,155],[140,140],[200,170],[200,220],[90,230]]], arrows: [[[200,70],[90,70]]]},
+  6: {strokes: [[[190,80],[130,60],[80,130],[80,190],[130,240],[180,220],[180,170],[130,150],[80,170]]], arrows: [[[190,80],[100,70]]]},
+  7: {strokes: [[[80,80],[210,80],[130,240]]], arrows: [[[80,80],[210,80]]]},
+  8: {strokes: [[[150,60],[190,90],[190,140],[150,170],[110,200],[110,230],[150,245],[190,230],[190,200],[150,170],[110,140],[110,90],[150,60]]], arrows: [[[150,60],[185,90]]]},
+  9: {strokes: [[[210,130],[200,80],[150,60],[100,80],[100,130],[150,155],[200,135],[210,130],[210,190],[160,245]]], arrows: [[[180,80],[110,80]]]},
+  10: {strokes: [[[100,70],[100,230]],[[170,70],[140,100],[130,150],[140,200],[170,230],[200,200],[210,150],[200,100],[170,70]]], arrows: [[[100,70],[100,150]],[[170,70],[200,100]]]},
+};
+// Pour 11-20 simplifiés (deux chiffres, on dessine juste un arc / courbe simple)
+for(let n=11;n<=20;n++){
+  if(!NUM_PATHS[n]){
+    NUM_PATHS[n]={
+      strokes:[[[80,80],[80,240]],[[160,80],[160,240]]],
+      arrows:[[[80,80],[80,160]],[[160,80],[160,160]]]
+    };
+  }
+}
+
+function renderTrace() {
+  traceCanvas = document.getElementById('trace-canvas');
+  traceCtx = traceCanvas.getContext('2d');
+  // Adapter la taille
+  const maxW = Math.min(window.innerWidth - 32, 300);
+  traceCanvas.style.width = maxW + 'px';
+  traceCanvas.style.height = maxW + 'px';
+  traceCanvas.width = 300;
+  traceCanvas.height = 300;
+
+  document.getElementById('trace-title').textContent = t('trace_title', traceNum);
+  document.getElementById('trace-subtitle').textContent = t('trace_instr');
+
+  // Points indicateurs
+  const dots = document.getElementById('step-dots');
+  dots.innerHTML = '';
+  for (let n = 1; n <= 20; n++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (n < traceNum ? ' done' : n === traceNum ? ' active' : '');
+    dots.appendChild(d);
+  }
+
+  drawTraceGuide();
+  document.getElementById('trace-prev-btn').style.opacity = traceNum <= 1 ? '0.3' : '1';
+  document.getElementById('trace-next-btn').style.opacity = traceNum >= 20 ? '0.3' : '1';
+}
+
+function drawTraceGuide() {
+  if (!traceCtx) return;
+  const ctx = traceCtx;
+  const c = NUM_COLORS[traceNum];
+  ctx.clearRect(0, 0, 300, 300);
+
+  // Fond
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, 300, 300, 20);
+  ctx.fill();
+
+  const paths = NUM_PATHS[traceNum];
+  if (!paths) return;
+
+  // Dessiner les traits pointillés de guidage
+  ctx.save();
+  ctx.strokeStyle = c + '55';
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.setLineDash([18, 10]);
+  paths.strokes.forEach(pts => {
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      const mx = (pts[i-1][0]+pts[i][0])/2;
+      const my = (pts[i-1][1]+pts[i][1])/2;
+      ctx.quadraticCurveTo(pts[i-1][0], pts[i-1][1], mx, my);
+    }
+    ctx.lineTo(pts[pts.length-1][0], pts[pts.length-1][1]);
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // Cercle de départ
+  paths.strokes.forEach(pts => {
+    ctx.save();
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(pts[0][0], pts[0][1], 10, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+    // Flèche de direction
+    if (pts.length >= 2) {
+      drawArrow(ctx, pts[0][0], pts[0][1], pts[1][0], pts[1][1], c);
+    }
+  });
+
+  // Numéro fantôme au centre
+  ctx.save();
+  ctx.globalAlpha = 0.07;
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 180px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(traceNum, 150, 158);
+  ctx.restore();
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  const ang = Math.atan2(y2-y1, x2-x1);
+  const len = 30;
+  const ax = x1 + Math.cos(ang)*len;
+  const ay = y1 + Math.sin(ang)*len;
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(ax, ay);
+  ctx.stroke();
+  // Tête
+  ctx.beginPath();
+  ctx.translate(ax, ay);
+  ctx.rotate(ang);
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-12, -6);
+  ctx.lineTo(-12, 6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function startTrace(e) {
+  if (!traceCtx) return;
+  isDrawing = true;
+  const {x, y} = getPos(e);
+  traceCtx.beginPath();
+  traceCtx.moveTo(x, y);
+}
+function moveTrace(e) {
+  if (!isDrawing || !traceCtx) return;
+  e.preventDefault();
+  const {x, y} = getPos(e);
+  const c = NUM_COLORS[traceNum];
+  traceCtx.lineTo(x, y);
+  traceCtx.strokeStyle = c;
+  traceCtx.lineWidth = 14;
+  traceCtx.lineCap = 'round';
+  traceCtx.lineJoin = 'round';
+  traceCtx.setLineDash([]);
+  traceCtx.globalAlpha = 0.85;
+  traceCtx.stroke();
+  traceCtx.globalAlpha = 1;
+}
+function endTrace() {
+  if (!isDrawing) return;
+  isDrawing = false;
+  strokeCount++;
+  if (strokeCount >= (NUM_PATHS[traceNum]?.strokes?.length || 1)) {
+    validateTrace();
+  }
+}
+function getPos(e) {
+  const rect = traceCanvas.getBoundingClientRect();
+  const scaleX = 300 / rect.width;
+  const scaleY = 300 / rect.height;
+  if (e.touches && e.touches[0]) {
+    return {
+      x: (e.touches[0].clientX - rect.left) * scaleX,
+      y: (e.touches[0].clientY - rect.top) * scaleY
+    };
+  }
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+function clearTrace() {
+  strokeCount = 0;
+  drawTraceGuide();
+  document.getElementById('trace-feedback').textContent = '';
+}
+function validateTrace() {
+  traceStars++;
+  const msgs = t('quiz_correct');
+  document.getElementById('trace-feedback').textContent = msgs[Math.floor(Math.random()*msgs.length)];
+  playSuccess();
+  setTimeout(() => {
+    document.getElementById('trace-feedback').textContent = '';
+    if (traceNum < 20) { traceNum++; clearTrace(); renderTrace(); speakTraceNum(); }
+  }, 1000);
+}
+function speakTraceNum() {
+  speakWithVoice(t('names')[traceNum], lang==='fr'?'fr-FR':'en-GB', 0.85, 1.15);
+}
+function tracePrev() {
+  if (traceNum <= 1) return;
+  traceNum--; clearTrace(); renderTrace();
+}
+function traceNext() {
+  if (traceNum >= 20) return;
+  traceNum++; clearTrace(); renderTrace();
+}
+// Events canvas trace
+document.getElementById('trace-canvas').addEventListener('mousedown', startTrace);
+document.getElementById('trace-canvas').addEventListener('mousemove', moveTrace);
+document.getElementById('trace-canvas').addEventListener('mouseup', endTrace);
+document.getElementById('trace-canvas').addEventListener('touchstart', e => { e.preventDefault(); startTrace(e); }, {passive:false});
+document.getElementById('trace-canvas').addEventListener('touchmove', e => { e.preventDefault(); moveTrace(e); }, {passive:false});
+document.getElementById('trace-canvas').addEventListener('touchend', endTrace);
+
+// ===== QUIZ =====
+let quizQ = 0, quizScore = 0, quizAnswered = false;
+const QUIZ_TOTAL = 10;
+
+function renderQuiz() {
+  quizQ = 0; quizScore = 0;
+  renderStars(0);
+  newQuizQuestion();
+}
+
+function newQuizQuestion() {
+  if (quizQ >= QUIZ_TOTAL) {
+    document.getElementById('quiz-question').textContent = t('quiz_done', quizScore);
+    document.getElementById('quiz-objects').innerHTML = '<div style="font-size:60px;text-align:center;width:100%">🏆</div>';
+    document.getElementById('quiz-choices').innerHTML = `<button onclick="renderQuiz()" style="grid-column:1/4;border:none;border-radius:18px;padding:14px;font-size:16px;font-weight:800;color:#fff;background:#339af0;cursor:pointer">↺ Rejouer</button>`;
+    if (quizScore >= 8) { playTrumpet(); launchWinAnimation(); }
+    return;
+  }
+  quizAnswered = false;
+  document.getElementById('quiz-progress').textContent = `${quizQ + 1} / ${QUIZ_TOTAL}`;
+  const correct = Math.floor(Math.random() * 10) + 1;
+  const objs = OBJECTS[correct] || ['⭐'];
+
+  // Afficher les objets
+  const oGrid = document.getElementById('quiz-objects');
+  oGrid.innerHTML = '';
+  for (let i = 0; i < correct; i++) {
+    const d = document.createElement('div');
+    d.className = 'quiz-obj';
+    d.textContent = objs[i % objs.length];
+    d.style.animationDelay = (i * 50) + 'ms';
+    oGrid.appendChild(d);
+  }
+
+  document.getElementById('quiz-question').textContent = t('quiz_q_count');
+
+  // 3 choix dont la bonne réponse
+  const choices = new Set([correct]);
+  while (choices.size < 3) {
+    const r = Math.floor(Math.random() * 10) + 1;
+    if (r !== correct) choices.add(r);
+  }
+  const arr = Array.from(choices).sort(() => Math.random() - 0.5);
+  const cDiv = document.getElementById('quiz-choices');
+  cDiv.innerHTML = '';
+  arr.forEach(n => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.style.background = NUM_COLORS[n];
+    btn.textContent = n;
+    btn.onclick = () => answerQuiz(n, correct, btn);
+    cDiv.appendChild(btn);
+  });
+}
+
+function answerQuiz(chosen, correct, btn) {
+  if (quizAnswered) return;
+  quizAnswered = true;
+  if (chosen === correct) {
+    btn.classList.add('correct');
+    quizScore++;
+    renderStars(quizScore);
+    playSuccess();
+    speakCorrect();
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    // Montrer la bonne
+    document.querySelectorAll('.choice-btn').forEach(b => {
+      if (parseInt(b.textContent) === correct) b.classList.add('correct');
+    });
+  }
+  quizQ++;
+  setTimeout(newQuizQuestion, 1200);
+}
+
+function speakCorrect() {
+  const msgs = t('quiz_correct');
+  const text = msgs[Math.floor(Math.random()*msgs.length)].replace(/[🌟⭐🎉🏆🌈]/g,'');
+  speakWithVoice(text, lang==='fr'?'fr-FR':'en-GB', 0.9, 1.3);
+}
+
+function renderStars(n) {
+  const bar = document.getElementById('score-stars');
+  bar.innerHTML = '';
+  for (let i = 0; i < QUIZ_TOTAL; i++) {
+    const s = document.createElement('span');
+    s.className = 'score-star' + (i < n ? ' earned' : '');
+    s.textContent = i < n ? '⭐' : '☆';
+    s.style.color = i < n ? '#fbbf24' : 'rgba(255,255,255,0.2)';
+    s.style.fontSize = '18px';
+    bar.appendChild(s);
+  }
+}
+
+// ===== ORDRE =====
+let ordreMode = 'ordre'; // 'ordre' ou 'suite'
+let ordreNums = [];
+let ordreSelected = null;
+let ordrePlaced = [];
+let suiteNums = [];
+let suiteBlanks = [];
+
+function renderOrdre() {
+  // Alterner entre les deux modes
+  ordreMode = Math.random() < 0.5 ? 'ordre' : 'suite';
+  newOrdre();
+}
+
+function newOrdre() {
+  ordreMode = Math.random() < 0.5 ? 'ordre' : 'suite';
+  ordreSelected = null;
+  document.getElementById('ordre-feedback').textContent = '';
+
+  if (ordreMode === 'ordre') {
+    // Remettre 8 chiffres dans l'ordre
+    const start = Math.floor(Math.random() * 13) + 1;
+    const nums = [];
+    for (let i = 0; i < 8; i++) nums.push(start + i);
+    ordreNums = [...nums].sort(() => Math.random() - 0.5);
+    ordrePlaced = new Array(8).fill(false);
+    document.getElementById('ordre-title').textContent = t('ordre_title');
+    document.getElementById('suite-row').style.display = 'none';
+    renderOrdreGrid(nums, ordreNums);
+  } else {
+    // Compléter une suite avec des trous
+    const start = Math.floor(Math.random() * 16) + 1;
+    suiteNums = [];
+    for (let i = 0; i < 5; i++) suiteNums.push(start + i);
+    // Choisir 2 positions à masquer
+    suiteBlanks = [];
+    const positions = [0,1,2,3,4].sort(() => Math.random()-0.5).slice(0,2).sort((a,b)=>a-b);
+    suiteBlanks = positions;
+    document.getElementById('ordre-title').textContent = t('ordre_suite');
+    document.getElementById('suite-row').style.display = 'flex';
+    renderSuiteRow();
+    // Choix : les 2 bonnes + 3 distracteurs
+    const choices = new Set(positions.map(p => suiteNums[p]));
+    while (choices.size < 5) {
+      const r = Math.floor(Math.random()*20)+1;
+      if (!suiteNums.includes(r)) choices.add(r);
+    }
+    const arr = Array.from(choices).sort(() => Math.random()-0.5);
+    renderSuiteChoices(arr);
+  }
+}
+
+function renderSuiteRow() {
+  const row = document.getElementById('suite-row');
+  row.innerHTML = '';
+  suiteNums.forEach((n, i) => {
+    const d = document.createElement('div');
+    if (suiteBlanks.includes(i)) {
+      d.className = 'suite-blank';
+      d.id = 'blank-' + i;
+      d.textContent = '?';
+    } else {
+      d.className = 'suite-num';
+      d.textContent = n;
+      d.style.color = NUM_COLORS[n];
+    }
+    row.appendChild(d);
+    if (i < suiteNums.length-1) {
+      const arrow = document.createElement('div');
+      arrow.style.cssText = 'color:rgba(255,255,255,0.4);font-size:16px';
+      arrow.textContent = '→';
+      row.appendChild(arrow);
+    }
+  });
+}
+
+function renderSuiteChoices(arr) {
+  const grid = document.getElementById('ordre-grid');
+  grid.innerHTML = '';
+  arr.forEach(n => {
+    const btn = document.createElement('div');
+    btn.className = 'ordre-card';
+    btn.style.background = NUM_COLORS[n];
+    btn.textContent = n;
+    btn.dataset.n = n;
+    btn.onclick = () => pickSuiteChoice(n, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function pickSuiteChoice(n, btn) {
+  if (btn.classList.contains('placed')) return;
+  // Trouver le bon blank
+  const idx = suiteBlanks.find(i => suiteNums[i] === n);
+  if (idx !== undefined) {
+    // Bonne réponse
+    btn.classList.add('placed');
+    const blankEl = document.getElementById('blank-' + idx);
+    if (blankEl) {
+      blankEl.textContent = n;
+      blankEl.classList.add('filled');
+      blankEl.style.color = NUM_COLORS[n];
+      blankEl.style.border = 'none';
+    }
+    playSuccess();
+    // Retirer de suiteBlanks
+    suiteBlanks = suiteBlanks.filter(i => i !== idx);
+    if (suiteBlanks.length === 0) {
+      document.getElementById('ordre-feedback').textContent = t('ordre_win');
+      playTrumpet();
+      setTimeout(newOrdre, 1500);
+    }
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    setTimeout(() => btn.classList.remove('wrong'), 400);
+    document.getElementById('ordre-feedback').textContent = t('ordre_try');
+    setTimeout(() => document.getElementById('ordre-feedback').textContent = '', 800);
+  }
+}
+
+let ordreCorrect = [];
+let ordreExpected = 0;
+
+function renderOrdreGrid(correct, shuffled) {
+  ordreCorrect = correct;
+  ordreExpected = 0;
+  const grid = document.getElementById('ordre-grid');
+  grid.innerHTML = '';
+  shuffled.forEach(n => {
+    const btn = document.createElement('div');
+    btn.className = 'ordre-card';
+    btn.style.background = NUM_COLORS[n];
+    btn.textContent = n;
+    btn.dataset.n = n;
+    btn.onclick = () => clickOrdreCard(n, btn);
+    grid.appendChild(btn);
+  });
+}
+
+function clickOrdreCard(n, btn) {
+  if (btn.classList.contains('placed')) return;
+  const nextExpected = ordreCorrect[ordreExpected];
+  if (n === nextExpected) {
+    btn.classList.add('placed');
+    playSuccess();
+    ordreExpected++;
+    if (ordreExpected >= ordreCorrect.length) {
+      document.getElementById('ordre-feedback').textContent = t('ordre_win');
+      playTrumpet();
+      setTimeout(() => { ordreExpected = 0; newOrdre(); }, 1500);
+    }
+  } else {
+    btn.classList.add('wrong');
+    playWrong();
+    setTimeout(() => btn.classList.remove('wrong'), 400);
+    document.getElementById('ordre-feedback').textContent = t('ordre_try');
+    setTimeout(() => document.getElementById('ordre-feedback').textContent = '', 800);
+  }
+}
+
+// ===== TABS =====
+let currentTab = 'decouverte';
+function switchTab(tab) {
+  currentTab = tab;
+  ['decouverte','trace','quiz','ordre'].forEach(s => {
+    document.getElementById('screen-'+s).style.display = s === tab ? 'block' : 'none';
+    document.getElementById('tab-'+s).classList.toggle('active', s === tab);
+  });
+  if (tab === 'decouverte') renderDecouverte();
+  if (tab === 'trace') renderTrace();
+  if (tab === 'quiz') renderQuiz();
+  if (tab === 'ordre') { ordreExpected = 0; ordreCorrect = []; renderOrdre(); }
+}
+
+// ===== SON =====
+let soundEnabled = true;
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('btn-sound').textContent = soundEnabled ? '🔊' : '🔇';
+}
+function playSuccess() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [523,659,784,1047].forEach((f,i) => {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0, ctx.currentTime+i*0.07);
+      g.gain.linearRampToValueAtTime(0.25, ctx.currentTime+i*0.07+0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+i*0.07+0.18);
+      o.start(ctx.currentTime+i*0.07); o.stop(ctx.currentTime+i*0.07+0.18);
+    });
+  } catch(e) {}
+}
+function playWrong() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator(); const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sawtooth'; o.frequency.value = 180;
+    g.gain.setValueAtTime(0.2, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime+0.3);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime+0.3);
+  } catch(e) {}
+}
+function playTrumpet() {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [523,659,784,1047].forEach((freq,i) => {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      const dist = ctx.createWaveShaper();
+      const curve = new Float32Array(256);
+      for (let j=0;j<256;j++){const x=j*2/256-1;curve[j]=x*(3+10)/(1+10*Math.abs(x));}
+      dist.curve = curve;
+      o.connect(dist); dist.connect(g); g.connect(ctx.destination);
+      o.type = 'sawtooth'; o.frequency.value = freq;
+      const t = ctx.currentTime + i*0.15;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(0.3,t+0.02);
+      g.gain.setValueAtTime(0.3,t+0.2);
+      g.gain.linearRampToValueAtTime(0,t+0.25);
+      o.start(t); o.stop(t+0.3);
+    });
+  } catch(e) {}
+}
+
+// ===== ANIMATION VICTOIRE =====
+function launchWinAnimation() {
+  const canvas = document.getElementById('win-canvas');
+  canvas.style.display = 'block';
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  let running = true;
+  canvas._stop = () => { running = false; canvas.style.display = 'none'; };
+  setTimeout(() => { if(canvas._stop) { running=false; canvas.style.display='none'; } }, 4000);
+
+  const particles = [];
+  const colors = ['#ff6b9d','#ffa94d','#51cf66','#339af0','#cc5de8','#ffd43b'];
+  for (let i=0;i<80;i++) {
+    particles.push({
+      x: Math.random()*W, y: -20,
+      vx: (Math.random()-0.5)*6, vy: Math.random()*4+2,
+      r: Math.random()*12+4, color: colors[Math.floor(Math.random()*colors.length)],
+      rot: Math.random()*Math.PI*2, vrot: (Math.random()-0.5)*0.2
+    });
+  }
+
+  function draw() {
+    if (!running) return;
+    ctx.clearRect(0,0,W,H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.rot += p.vrot;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.roundRect(-p.r/2,-p.r/2,p.r,p.r,p.r*0.3);
+      ctx.fill();
+      ctx.restore();
+    });
+    // Numéros géants qui tombent
+    ctx.font = 'bold 60px sans-serif';
+    ctx.textAlign = 'center';
+    [1,2,3,4,5].forEach((n,i) => {
+      ctx.fillStyle = colors[i];
+      ctx.globalAlpha = 0.5;
+      ctx.fillText(n, (i+1)*W/6, H*0.4 + Math.sin(Date.now()/400+i)*30);
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  canvas.onclick = () => { canvas._stop(); };
+}
+
+
+const KIDS_APPS = [
+  { id:'6772548541', name:'Lettres Kids', cat:'kids' },
+  { id:'6772546976', name:'Chiffres Kids', cat:'kids' },
+  { id:'6772468506', name:'Mahjong Kids', cat:'kids' },
+];
+
+function openAppsModal(){
+  document.getElementById('apps-modal').classList.add('open');
+  const grid = document.getElementById('apps-grid-kids');
+  if(grid.childElementCount > 0) return;
+  KIDS_APPS.forEach(app => {
+    const a = document.createElement('a');
+    a.className = 'app-item-kids';
+    a.href = `https://apps.apple.com/app/id${app.id}`;
+    a.target = '_blank';
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'app-icon-kids';
+    const img = document.createElement('img');
+    img.src = `https://tools.applemediaservices.com/api/artwork/app/${app.id}?size=64x64`;
+    img.onerror = () => { iconDiv.textContent = '📱'; };
+    iconDiv.appendChild(img);
+    const name = document.createElement('div');
+    name.className = 'app-name-kids';
+    name.textContent = app.name;
+    a.appendChild(iconDiv);
+    a.appendChild(name);
+    grid.appendChild(a);
+    // JSONP icône iTunes
+    loadAppIcon(app.id, iconDiv, img);
+  });
+}
+function loadAppIcon(appId, iconDiv, img){
+  const cb = 'appcb' + appId;
+  window[cb] = function(data){
+    if(data.results&&data.results[0]){
+      img.src = data.results[0].artworkUrl100;
+      img.onerror = ()=>{ iconDiv.innerHTML='📱'; };
+    }
+    delete window[cb];
+  };
+  const s = document.createElement('script');
+  s.src = `https://itunes.apple.com/lookup?id=${appId}&callback=${cb}`;
+  document.body.appendChild(s);
+}
+function closeAppsModal(){
+  document.getElementById('apps-modal').classList.remove('open');
+}
+
+// ===== INIT =====
+switchTab('decouverte');
+applyLang();
+</script>
+</body>
+</html>

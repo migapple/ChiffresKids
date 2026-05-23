@@ -1,0 +1,16 @@
+{
+  "name": "Chiffres Kids",
+  "version": "1.0.0",
+  "description": "Chiffres Kids",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo 'No build step needed'"
+  },
+  "dependencies": {
+    "@capacitor-community/text-to-speech": "^1.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/ios": "^6.0.0"
+  },
+  "author": "Michel Garlandat",
+  "license": "UNLICENSED"
+}

@@ -59,10 +59,11 @@ h1 span{font-size:20px}
 .t-btn{border:none;border-radius:16px;padding:10px 20px;font-size:15px;font-weight:800;color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,0.25)}
 .t-btn:active{transform:scale(0.96)}
 .trace-feedback{text-align:center;margin-top:10px;font-size:18px;font-weight:800;min-height:28px}
-.step-indicators{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
-.step-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.25);transition:all 0.3s}
-.step-dot.done{background:#51cf66}
-.step-dot.active{background:#fff;transform:scale(1.3)}
+.step-indicators{display:flex;overflow-x:auto;gap:5px;padding:4px 0 8px;scrollbar-width:none;margin-bottom:6px}
+.step-indicators::-webkit-scrollbar{display:none}
+.step-dot{min-width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.35);font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;transition:all 0.3s;flex-shrink:0;cursor:pointer}
+.step-dot.done{background:#51cf66;color:#fff;opacity:0.7}
+.step-dot.active{color:#fff;opacity:1;transform:scale(1.2);box-shadow:0 3px 10px rgba(0,0,0,0.3)}
 
 /* === ONGLET QUIZ === */
 #screen-quiz{display:none}
@@ -163,11 +164,16 @@ h1 span{font-size:20px}
   <div id="screen-trace">
     <div class="trace-title" id="trace-title">Trace le chiffre 1</div>
     <div class="trace-subtitle" id="trace-subtitle">Suis les flèches avec ton doigt !</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:8px">
+      <button class="t-btn" id="mode-10" onclick="setTraceMax(10)" style="background:#f472b6;font-size:12px;padding:6px 14px">1 → 10</button>
+      <button class="t-btn" id="mode-20" onclick="setTraceMax(20)" style="background:rgba(255,255,255,0.15);font-size:12px;padding:6px 14px">1 → 20</button>
+    </div>
     <div class="step-indicators" id="step-dots"></div>
     <div class="canvas-wrap"><canvas id="trace-canvas" width="300" height="300"></canvas></div>
     <div class="trace-actions">
       <button class="t-btn" onclick="tracePrev()" style="background:#ff6b9d" id="trace-prev-btn">◀</button>
       <button class="t-btn" onclick="clearTrace()" style="background:rgba(255,255,255,0.2)" data-key="effacer">Effacer</button>
+      <button class="t-btn" onclick="traceReset()" style="background:#f97316" title="Retour au 1">↺ 1</button>
       <button class="t-btn" onclick="traceNext()" style="background:#51cf66" id="trace-next-btn">▶</button>
     </div>
     <div class="trace-feedback" id="trace-feedback"></div>
@@ -249,7 +255,7 @@ function toggleLang() {
   lang = lang === 'fr' ? 'en' : 'fr';
   document.getElementById('btn-lang').textContent = lang === 'fr' ? '🇬🇧' : '🇫🇷';
   applyLang();
-  if (currentTab === 'decouverte') renderDecouverte();
+  if (currentTab === 'decouverte') { renderDecouverte(); setTimeout(speakNumber, 300); }
   if (currentTab === 'trace') renderTrace();
   if (currentTab === 'quiz') renderQuiz();
   if (currentTab === 'ordre') renderOrdre();
@@ -349,7 +355,7 @@ function renderDecouverte() {
 function changeNum(dir) {
   currentNum = Math.max(1, Math.min(20, currentNum + dir));
   renderDecouverte();
-  speakNumber();
+  setTimeout(speakNumber, 300);
 }
 
 // ===== SPEECH =====
@@ -379,6 +385,7 @@ function speakNumber() {
 
 // ===== TRACE =====
 let traceNum = 1;
+let traceMax = 10;
 let isDrawing = false;
 let traceCtx = null;
 let traceCanvas = null;
@@ -398,25 +405,49 @@ const NUM_PATHS = {
   9: {strokes: [[[210,130],[200,80],[150,60],[100,80],[100,130],[150,155],[200,135],[210,130],[210,190],[160,245]]], arrows: [[[180,80],[110,80]]]},
   10: {strokes: [[[100,70],[100,230]],[[170,70],[140,100],[130,150],[140,200],[170,230],[200,200],[210,150],[200,100],[170,70]]], arrows: [[[100,70],[100,150]],[[170,70],[200,100]]]},
 };
-// Pour 11-20 simplifiés (deux chiffres, on dessine juste un arc / courbe simple)
+// Pour 11-20 : tracé des deux chiffres côte à côte
+// Chiffre gauche décalé x-70, chiffre droit décalé x+30
+function shiftPath(strokes, dx, dy){
+  return strokes.map(pts => pts.map(([x,y]) => [x+dx, y+dy]));
+}
+// Paths de base pour chaque chiffre 0-9 à l'échelle réduite
+const DIGIT_PATHS = {
+  0:{strokes:[[[150,60],[195,80],[210,130],[210,170],[195,220],[150,240],[105,220],[90,170],[90,130],[105,80],[150,60]]]},
+  1:{strokes:[[[150,60],[150,240]]]},
+  2:{strokes:[[[100,100],[140,70],[200,100],[200,145],[100,230],[210,230]]]},
+  3:{strokes:[[[100,80],[185,80],[145,155],[185,200],[185,215],[145,240],[100,240]]]},
+  4:{strokes:[[[165,65],[90,175],[215,175]],[[165,65],[165,240]]]},
+  5:{strokes:[[[195,75],[105,75],[90,150],[145,135],[195,165],[195,215],[145,235],[95,225]]]},
+  6:{strokes:[[[185,85],[140,65],[95,120],[90,175],[120,230],[165,240],[200,220],[200,175],[165,155],[90,175]]]},
+  7:{strokes:[[[90,80],[210,80],[135,240]]]},
+  8:{strokes:[[[150,65],[185,90],[185,140],[150,168],[115,195],[115,228],[150,242],[185,228],[185,195],[150,168],[115,140],[115,90],[150,65]]]},
+  9:{strokes:[[[205,135],[195,85],[150,65],[105,85],[105,135],[150,158],[195,135],[205,135],[205,190],[160,240]]]},
+};
 for(let n=11;n<=20;n++){
-  if(!NUM_PATHS[n]){
-    NUM_PATHS[n]={
-      strokes:[[[80,80],[80,240]],[[160,80],[160,240]]],
-      arrows:[[[80,80],[80,160]],[[160,80],[160,160]]]
-    };
-  }
+  const tens = Math.floor(n/10); // 1
+  const units = n % 10;          // 1-9 ou 0
+  const leftStrokes  = shiftPath(DIGIT_PATHS[tens].strokes,  -55, 0);
+  const rightStrokes = shiftPath(DIGIT_PATHS[units] ? DIGIT_PATHS[units].strokes : DIGIT_PATHS[0].strokes, 55, 0);
+  NUM_PATHS[n] = {
+    strokes: [...leftStrokes, ...rightStrokes],
+    arrows: [
+      [leftStrokes[0][0], leftStrokes[0][1]],
+      [rightStrokes[0][0], rightStrokes[0][1]]
+    ]
+  };
 }
 
 function renderTrace() {
-  traceCanvas = document.getElementById('trace-canvas');
-  traceCtx = traceCanvas.getContext('2d');
-  // Adapter la taille
-  const maxW = Math.min(window.innerWidth - 32, 300);
-  traceCanvas.style.width = maxW + 'px';
-  traceCanvas.style.height = maxW + 'px';
-  traceCanvas.width = 300;
-  traceCanvas.height = 300;
+  // Init canvas une seule fois ou si contexte perdu
+  if (!traceCanvas) {
+    traceCanvas = document.getElementById('trace-canvas');
+    const maxW = Math.min(window.innerWidth - 32, 300);
+    traceCanvas.style.width = maxW + 'px';
+    traceCanvas.style.height = maxW + 'px';
+    traceCanvas.width = 300;
+    traceCanvas.height = 300;
+    traceCtx = traceCanvas.getContext('2d');
+  }
 
   document.getElementById('trace-title').textContent = t('trace_title', traceNum);
   document.getElementById('trace-subtitle').textContent = t('trace_instr');
@@ -424,15 +455,28 @@ function renderTrace() {
   // Points indicateurs
   const dots = document.getElementById('step-dots');
   dots.innerHTML = '';
-  for (let n = 1; n <= 20; n++) {
+  for (let n = 1; n <= traceMax; n++) {
     const d = document.createElement('div');
     d.className = 'step-dot' + (n < traceNum ? ' done' : n === traceNum ? ' active' : '');
+    d.style.background = n < traceNum ? '#51cf66' : n === traceNum ? NUM_COLORS[n] : '';
+    d.textContent = n;
+    d.onclick = () => { traceNum = n; strokeCount = 0; isDrawing = false; renderTrace(); setTimeout(speakTraceNum, 300); };
     dots.appendChild(d);
   }
+  // Mettre à jour style boutons mode
+  const m10 = document.getElementById('mode-10');
+  const m20 = document.getElementById('mode-20');
+  if(m10) m10.style.background = traceMax===10 ? '#f472b6' : 'rgba(255,255,255,0.15)';
+  if(m20) m20.style.background = traceMax===20 ? '#f472b6' : 'rgba(255,255,255,0.15)';
+  // Scroll vers le pill actif
+  setTimeout(() => {
+    const active = dots.querySelector('.active');
+    if (active) active.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+  }, 50);
 
   drawTraceGuide();
   document.getElementById('trace-prev-btn').style.opacity = traceNum <= 1 ? '0.3' : '1';
-  document.getElementById('trace-next-btn').style.opacity = traceNum >= 20 ? '0.3' : '1';
+  document.getElementById('trace-next-btn').style.opacity = traceNum >= traceMax ? '0.3' : '1';
 }
 
 function drawTraceGuide() {
@@ -488,7 +532,7 @@ function drawTraceGuide() {
   ctx.save();
   ctx.globalAlpha = 0.07;
   ctx.fillStyle = '#fff';
-  ctx.font = 'bold 180px sans-serif';
+  ctx.font = traceNum >= 10 ? 'bold 120px sans-serif' : 'bold 180px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(traceNum, 150, 158);
@@ -567,17 +611,39 @@ function getPos(e) {
 }
 function clearTrace() {
   strokeCount = 0;
-  drawTraceGuide();
-  document.getElementById('trace-feedback').textContent = '';
+  isDrawing = false;
+  if (traceCtx) drawTraceGuide();
+  const f = document.getElementById('trace-feedback');
+  if (f) f.textContent = '';
 }
 function validateTrace() {
   traceStars++;
+  strokeCount = 0; // reset immédiat avant le délai
+  isDrawing = false;
   const msgs = t('quiz_correct');
   document.getElementById('trace-feedback').textContent = msgs[Math.floor(Math.random()*msgs.length)];
   playSuccess();
   setTimeout(() => {
-    document.getElementById('trace-feedback').textContent = '';
-    if (traceNum < 20) { traceNum++; clearTrace(); renderTrace(); speakTraceNum(); }
+    if (document.getElementById('trace-feedback'))
+      document.getElementById('trace-feedback').textContent = '';
+    if (traceNum < traceMax) {
+      traceNum++;
+      strokeCount = 0;
+      isDrawing = false;
+      renderTrace();
+      speakTraceNum();
+    } else {
+      // Fin de la série !
+      playTrumpet();
+      launchWinAnimation();
+      setTimeout(() => {
+        traceNum = 1;
+        strokeCount = 0;
+        isDrawing = false;
+        traceCanvas = null; traceCtx = null;
+        renderTrace();
+      }, 4000);
+    }
   }, 1000);
 }
 function speakTraceNum() {
@@ -585,11 +651,22 @@ function speakTraceNum() {
 }
 function tracePrev() {
   if (traceNum <= 1) return;
-  traceNum--; clearTrace(); renderTrace();
+  traceNum--; clearTrace(); renderTrace(); setTimeout(speakTraceNum, 300);
 }
 function traceNext() {
-  if (traceNum >= 20) return;
-  traceNum++; clearTrace(); renderTrace();
+  if (traceNum >= traceMax) return;
+  traceNum++; clearTrace(); renderTrace(); setTimeout(speakTraceNum, 300);
+}
+function traceReset() {
+  traceNum = 1; strokeCount = 0; isDrawing = false;
+  traceCanvas = null; traceCtx = null;
+  renderTrace(); setTimeout(speakTraceNum, 300);
+}
+function setTraceMax(max) {
+  traceMax = max;
+  traceNum = 1; strokeCount = 0; isDrawing = false;
+  traceCanvas = null; traceCtx = null;
+  renderTrace(); setTimeout(speakTraceNum, 300);
 }
 // Events canvas trace
 document.getElementById('trace-canvas').addEventListener('mousedown', startTrace);
@@ -863,8 +940,8 @@ function switchTab(tab) {
     document.getElementById('screen-'+s).style.display = s === tab ? 'block' : 'none';
     document.getElementById('tab-'+s).classList.toggle('active', s === tab);
   });
-  if (tab === 'decouverte') renderDecouverte();
-  if (tab === 'trace') renderTrace();
+  if (tab === 'decouverte') { renderDecouverte(); setTimeout(speakNumber, 300); }
+  if (tab === 'trace') { traceCanvas = null; traceCtx = null; renderTrace(); setTimeout(speakTraceNum, 300); }
   if (tab === 'quiz') renderQuiz();
   if (tab === 'ordre') { ordreExpected = 0; ordreCorrect = []; renderOrdre(); }
 }
